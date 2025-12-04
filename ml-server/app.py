@@ -30,8 +30,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Initialize OpenAI client
-openai.api_key = os.getenv("OPENAI_API_KEY")
+# Initialize OpenAI client (will be None if API key is not set)
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+openai_client = openai.OpenAI(api_key=OPENAI_API_KEY) if OPENAI_API_KEY else None
 
 # Request/Response Models
 class StandardizeRequest(BaseModel):
@@ -109,13 +110,12 @@ async def standardize_protocol(request: StandardizeRequest):
         }}
         """
         
-        if not openai.api_key:
+        if not openai_client:
             # Fallback to rule-based extraction if OpenAI is not configured
             return _fallback_standardize(request.text)
         
         try:
-            client = openai.OpenAI(api_key=openai.api_key)
-            response = client.chat.completions.create(
+            response = openai_client.chat.completions.create(
                 model="gpt-4o-mini",
                 messages=[
                     {"role": "system", "content": "You are a scientific protocol parser. Return only valid JSON."},
@@ -193,13 +193,12 @@ async def autocomplete_step(request: AutocompleteRequest):
         }}
         """
         
-        if not openai.api_key:
+        if not openai_client:
             # Fallback to simple suggestions
             return _fallback_autocomplete(request.current_steps)
         
         try:
-            client = openai.OpenAI(api_key=openai.api_key)
-            response = client.chat.completions.create(
+            response = openai_client.chat.completions.create(
                 model="gpt-4o-mini",
                 messages=[
                     {"role": "system", "content": "You are a scientific protocol assistant. Return only valid JSON."},
