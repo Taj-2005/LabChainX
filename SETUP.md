@@ -170,7 +170,9 @@ NEXT_PUBLIC_SOCKET_URL=http://localhost:3001
 NEXT_PUBLIC_ML_SERVER_URL=http://localhost:8000
 
 # Cloudinary Configuration (for image uploads)
-CLOUDINARY_CLOUD_NAME=your-cloud-name
+# Get these from https://cloudinary.com/console
+NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=your-cloud-name
+NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET=your-upload-preset-name
 CLOUDINARY_API_KEY=your-api-key
 CLOUDINARY_API_SECRET=your-api-secret
 ```
@@ -244,10 +246,17 @@ Copy the output and use it as your `NEXTAUTH_SECRET` value.
 1. Go to [Cloudinary](https://cloudinary.com) and sign up for a free account
 2. Navigate to Dashboard
 3. Copy your:
-   - Cloud Name
-   - API Key
-   - API Secret
-4. Add them to `.env.local` as shown above
+   - Cloud Name → `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME`
+   - API Key → `CLOUDINARY_API_KEY`
+   - API Secret → `CLOUDINARY_API_SECRET`
+4. Create an Upload Preset:
+   - Go to Settings → Upload
+   - Click "Add upload preset"
+   - Set signing mode to "Unsigned" (for client-side uploads)
+   - Save and copy the preset name → `NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET`
+5. Add all values to `.env.local` as shown above
+
+**Note:** The upload preset allows direct uploads from the browser, which is faster and reduces server load.
 
 #### Step 3: Run Development Server
 

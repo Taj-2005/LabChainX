@@ -3,6 +3,7 @@
 import { useState, useCallback } from "react";
 import { toast } from "sonner";
 import { validateImageFile } from "@/lib/cloudinary";
+import { uploadToCloudinaryClient } from "@/lib/cloudinary-client";
 
 export interface CloudinaryImage {
   public_id: string;
@@ -37,35 +38,57 @@ export function useImageUpload(options: UseImageUploadOptions = {}) {
         setIsUploading(true);
         setUploadProgress(0);
 
-        const formData = new FormData();
-        formData.append("file", file);
-        if (options.folder) {
-          formData.append("folder", options.folder);
-        }
-        if (options.resourceType) {
-          formData.append("resource_type", options.resourceType);
-        }
-
-        const response = await fetch("/api/upload", {
-          method: "POST",
-          body: formData,
-        });
-
-        if (!response.ok) {
-          const error = await response.json();
-          throw new Error(error.error || "Upload failed");
-        }
-
-        const data = await response.json();
-        setUploadProgress(100);
-
-        if (data.success && data.image) {
+        // Try direct client-side upload first (faster, no server round-trip)
+        const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
+        
+        if (uploadPreset) {
+          // Direct upload to Cloudinary from client
+          const result = await uploadToCloudinaryClient(
+            file,
+            options.folder
+          );
+          
+          setUploadProgress(100);
+          const image = {
+            public_id: result.public_id,
+            secure_url: result.secure_url,
+          };
+          
           toast.success("Image uploaded successfully");
-          options.onSuccess?.(data.image);
-          return data.image;
-        }
+          options.onSuccess?.(image);
+          return image;
+        } else {
+          // Fallback to server-side upload via API
+          const formData = new FormData();
+          formData.append("file", file);
+          if (options.folder) {
+            formData.append("folder", options.folder);
+          }
+          if (options.resourceType) {
+            formData.append("resource_type", options.resourceType);
+          }
 
-        throw new Error("Upload response missing image data");
+          const response = await fetch("/api/upload", {
+            method: "POST",
+            body: formData,
+          });
+
+          if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || "Upload failed");
+          }
+
+          const data = await response.json();
+          setUploadProgress(100);
+
+          if (data.success && data.image) {
+            toast.success("Image uploaded successfully");
+            options.onSuccess?.(data.image);
+            return data.image;
+          }
+
+          throw new Error("Upload response missing image data");
+        }
       } catch (error) {
         const errorMessage =
           error instanceof Error ? error.message : "Failed to upload image";
