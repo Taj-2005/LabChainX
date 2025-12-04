@@ -1,8 +1,9 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Clock, User, ChevronDown, ChevronUp } from "lucide-react";
+import { Clock, User, ChevronDown, ChevronUp, CheckCircle2 } from "lucide-react";
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
 
 interface Version {
   versionNumber?: number;
@@ -18,6 +19,8 @@ interface VersionTimelineProps {
   versions: Version[];
   currentVersion?: number;
   type?: "notebook" | "protocol";
+  onVersionSelect?: (index: number) => void;
+  selectedVersions?: [number | null, number | null];
 }
 
 function formatDate(date: string | Date): string {
@@ -36,7 +39,13 @@ function getVersionPreview(version: Version, type: "notebook" | "protocol"): str
   return "No preview available";
 }
 
-export function VersionTimeline({ versions, currentVersion, type = "notebook" }: VersionTimelineProps) {
+export function VersionTimeline({
+  versions,
+  currentVersion,
+  type = "notebook",
+  onVersionSelect,
+  selectedVersions = [null, null],
+}: VersionTimelineProps) {
   const [expandedVersion, setExpandedVersion] = useState<number | null>(null);
 
   if (!versions || versions.length === 0) {
@@ -49,12 +58,8 @@ export function VersionTimeline({ versions, currentVersion, type = "notebook" }:
     );
   }
 
-  // Sort versions by date (newest first)
-  const sortedVersions = [...versions].sort((a, b) => {
-    const dateA = new Date(a.savedAt).getTime();
-    const dateB = new Date(b.savedAt).getTime();
-    return dateB - dateA;
-  });
+  // Use versions as-is (already sorted by caller if needed)
+  const sortedVersions = versions;
 
   return (
     <Card>
@@ -92,6 +97,20 @@ export function VersionTimeline({ versions, currentVersion, type = "notebook" }:
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
+                      {onVersionSelect && (
+                        <button
+                          onClick={() => onVersionSelect(index)}
+                          className={`flex-shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
+                            selectedVersions[0] === index || selectedVersions[1] === index
+                              ? "bg-blue-600 border-blue-600 text-white"
+                              : "border-gray-300 hover:border-blue-400"
+                          }`}
+                        >
+                          {(selectedVersions[0] === index || selectedVersions[1] === index) && (
+                            <CheckCircle2 className="h-3 w-3" />
+                          )}
+                        </button>
+                      )}
                       <span className="font-semibold text-gray-900">
                         Version {versionNum}
                         {isCurrent && (
