@@ -12,7 +12,8 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
-import { useAuthStore } from "@/stores/auth-store";
+import { useAuthSession } from "@/hooks/use-session";
+import { signOut } from "next-auth/react";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -24,7 +25,7 @@ const navItems = [
 export function Sidebar() {
   const pathname = usePathname();
   const [isMobileOpen, setIsMobileOpen] = useState(false);
-  const { isAuthenticated } = useAuthStore();
+  const { user, isAuthenticated } = useAuthSession();
 
   // Don't show sidebar on auth pages
   if (pathname === "/login" || pathname === "/signup") {
@@ -93,19 +94,25 @@ export function Sidebar() {
           </nav>
 
           {/* User section */}
-          {isAuthenticated && (
-            <div className="border-t border-gray-200 p-4">
+          {isAuthenticated && user && (
+            <div className="border-t border-gray-200 p-4 space-y-2">
               <div className="flex items-center space-x-3">
                 <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 text-blue-700 text-sm font-medium">
-                  U
+                  {user.name?.charAt(0).toUpperCase() || "U"}
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-gray-900 truncate">
-                    User
+                    {user.name || "User"}
                   </p>
-                  <p className="text-xs text-gray-500 truncate">user@lab.edu</p>
+                  <p className="text-xs text-gray-500 truncate">{user.email || "user@lab.edu"}</p>
                 </div>
               </div>
+              <button
+                onClick={() => signOut({ callbackUrl: "/" })}
+                className="w-full text-left text-xs text-gray-600 hover:text-gray-900 px-2 py-1 rounded hover:bg-gray-50"
+              >
+                Sign out
+              </button>
             </div>
           )}
         </div>

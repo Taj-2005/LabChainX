@@ -2,14 +2,13 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { signIn } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { useRouter } from "next/navigation";
-import { useAuthStore } from "@/stores/auth-store";
 
 export default function SignupPage() {
   const router = useRouter();
-  const { login } = useAuthStore();
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -17,23 +16,51 @@ export default function SignupPage() {
     institution: "",
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError("");
     setIsLoading(true);
-    
-    // TODO: Implement actual authentication
-    // For now, simulate signup
-    setTimeout(() => {
-      login({
-        id: "1",
-        name: formData.name || "Demo User",
-        email: formData.email || "demo@lab.edu",
-        institution: formData.institution || "Demo University",
+
+    try {
+      // Create user account
+      const res = await fetch("/api/auth/signup", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
       });
-      router.push("/dashboard");
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.error || "Failed to create account");
+        setIsLoading(false);
+        return;
+      }
+
+      // Automatically sign in after successful signup
+      const result = await signIn("credentials", {
+        email: formData.email,
+        password: formData.password,
+        redirect: false,
+      });
+
+      if (result?.error) {
+        setError("Account created but login failed. Please try logging in.");
+        setIsLoading(false);
+        router.push("/login");
+      } else {
+        router.push("/dashboard");
+        router.refresh();
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "An error occurred during signup";
+      setError(errorMessage);
       setIsLoading(false);
-    }, 500);
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -115,6 +142,11 @@ export default function SignupPage() {
                 required
               />
             </div>
+            {error && (
+              <div className="rounded-lg bg-red-50 border border-red-200 p-3 text-sm text-red-700">
+                {error}
+              </div>
+            )}
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? "Creating account..." : "Create account"}
             </Button>

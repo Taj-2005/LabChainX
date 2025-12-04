@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Topbar } from "@/components/layout/topbar";
+import AuthSessionProvider from "@/components/providers/session-provider";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -22,13 +23,15 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.variable} font-sans antialiased`}>
-        <div className="flex min-h-screen">
-          <Sidebar />
-          <div className="flex-1 lg:ml-64">
-            <Topbar />
-            <main>{children}</main>
+        <AuthSessionProvider>
+          <div className="flex min-h-screen">
+            <Sidebar />
+            <div className="flex-1 lg:ml-64">
+              <Topbar />
+              <main>{children}</main>
+            </div>
           </div>
-        </div>
+        </AuthSessionProvider>
       </body>
     </html>
   );

@@ -2,34 +2,42 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { signIn } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { useRouter } from "next/navigation";
-import { useAuthStore } from "@/stores/auth-store";
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login } = useAuthStore();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError("");
     setIsLoading(true);
-    
-    // TODO: Implement actual authentication
-    // For now, simulate login
-    setTimeout(() => {
-      login({
-        id: "1",
-        name: "Demo User",
-        email: email || "demo@lab.edu",
-        institution: "Demo University",
+
+    try {
+      const result = await signIn("credentials", {
+        email,
+        password,
+        redirect: false,
       });
-      router.push("/dashboard");
+
+      if (result?.error) {
+        setError(result.error);
+        setIsLoading(false);
+      } else {
+        router.push("/dashboard");
+        router.refresh();
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "An error occurred during login";
+      setError(errorMessage);
       setIsLoading(false);
-    }, 500);
+    }
   };
 
   return (
@@ -72,6 +80,11 @@ export default function LoginPage() {
                 required
               />
             </div>
+            {error && (
+              <div className="rounded-lg bg-red-50 border border-red-200 p-3 text-sm text-red-700">
+                {error}
+              </div>
+            )}
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? "Signing in..." : "Sign in"}
             </Button>
