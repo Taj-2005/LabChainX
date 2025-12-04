@@ -23,6 +23,8 @@ import { Save, Plus, ArrowLeft, History, Sparkles } from "lucide-react";
 import { DraggableStep } from "@/components/protocol/draggable-step";
 import { ProtocolStep } from "@/types";
 import { autocompleteStep, checkMLServerHealth } from "@/lib/ml-api";
+import { toast } from "sonner";
+import { LoadingSpinner } from "@/components/loading";
 
 export default function ProtocolBuilderPage() {
   const params = useParams();
@@ -118,7 +120,9 @@ export default function ProtocolBuilderPage() {
   // AI Autocomplete next step
   const handleAutocompleteStep = async () => {
     if (!mlServerAvailable) {
-      setError("ML Server is not available. Please ensure it's running.");
+      const errorMsg = "ML Server is not available. Please ensure it's running.";
+      setError(errorMsg);
+      toast.error(errorMsg);
       return;
     }
 
@@ -140,10 +144,15 @@ export default function ProtocolBuilderPage() {
           notes: suggestion.notes || "",
         };
         setSteps([...steps, newStep]);
+        toast.success("AI suggested step added successfully");
+      } else {
+        toast.info("No suggestions available at this time");
       }
     } catch (err) {
       console.error("Autocomplete error:", err);
-      setError("Failed to get autocomplete suggestion. Please try again.");
+      const errorMsg = "Failed to get autocomplete suggestion. Please try again.";
+      setError(errorMsg);
+      toast.error(errorMsg);
     } finally {
       setIsAutocompleting(false);
     }
@@ -195,9 +204,12 @@ export default function ProtocolBuilderPage() {
 
       const data = await res.json();
       setSteps(data.protocol.steps);
+      toast.success(createVersion ? "Version created successfully" : "Protocol saved successfully");
     } catch (err) {
       console.error("Error saving protocol:", err);
-      setError(err instanceof Error ? err.message : "Failed to save");
+      const errorMessage = err instanceof Error ? err.message : "Failed to save";
+      setError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setIsSaving(false);
     }
@@ -286,8 +298,17 @@ export default function ProtocolBuilderPage() {
                 variant="outline"
                 disabled={isAutocompleting}
               >
-                <Sparkles className="h-4 w-4 mr-2" />
-                {isAutocompleting ? "AI Thinking..." : "AI Suggest Next Step"}
+                {isAutocompleting ? (
+                  <>
+                    <LoadingSpinner size="sm" className="mr-2" />
+                    AI Thinking...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="h-4 w-4 mr-2" />
+                    AI Suggest Next Step
+                  </>
+                )}
               </Button>
             )}
             <Button onClick={handleAddStep} size="sm">

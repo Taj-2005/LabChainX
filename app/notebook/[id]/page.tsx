@@ -8,6 +8,8 @@ import { Mic, MicOff, Save, Users } from "lucide-react";
 import { useNotebook } from "@/hooks/use-notebook";
 import { useSocket } from "@/hooks/use-socket";
 import { useVoiceToText } from "@/hooks/use-voice-to-text";
+import { toast } from "sonner";
+import { LoadingSpinner } from "@/components/loading";
 
 export default function NotebookDetailPage() {
   const params = useParams();
@@ -81,6 +83,7 @@ export default function NotebookDetailPage() {
       emitContentChange(content);
     } catch (err) {
       console.error("Auto-save failed:", err);
+      // Don't show toast for auto-save failures to avoid spam
     } finally {
       setIsSaving(false);
     }
@@ -129,8 +132,10 @@ export default function NotebookDetailPage() {
         autoSave: false,
       });
       setLastSaved(new Date());
+      toast.success("Notebook saved successfully");
     } catch (err) {
       console.error("Save failed:", err);
+      toast.error("Failed to save notebook");
     } finally {
       setIsSaving(false);
     }
@@ -227,8 +232,17 @@ export default function NotebookDetailPage() {
             onClick={handleManualSave}
             disabled={isSaving}
           >
-            <Save className="h-4 w-4 mr-2" />
-            {isSaving ? "Saving..." : "Save"}
+            {isSaving ? (
+              <>
+                <LoadingSpinner size="sm" className="mr-2" />
+                Saving...
+              </>
+            ) : (
+              <>
+                <Save className="h-4 w-4 mr-2" />
+                Save
+              </>
+            )}
           </Button>
         </div>
       </div>

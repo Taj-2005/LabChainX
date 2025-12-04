@@ -4,6 +4,8 @@ import "./globals.css";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Topbar } from "@/components/layout/topbar";
 import AuthSessionProvider from "@/components/providers/session-provider";
+import { ErrorBoundary } from "@/components/error-boundary";
+import { Toaster } from "@/components/ui/toast";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -23,15 +25,18 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.variable} font-sans antialiased`}>
-        <AuthSessionProvider>
-          <div className="flex min-h-screen">
-            <Sidebar />
-            <div className="flex-1 lg:ml-64">
-              <Topbar />
-              <main>{children}</main>
+        <ErrorBoundary>
+          <AuthSessionProvider>
+            <div className="flex min-h-screen">
+              <Sidebar />
+              <div className="flex-1 lg:ml-64">
+                <Topbar />
+                <main>{children}</main>
+              </div>
             </div>
-          </div>
-        </AuthSessionProvider>
+            <Toaster />
+          </AuthSessionProvider>
+        </ErrorBoundary>
       </body>
     </html>
   );
