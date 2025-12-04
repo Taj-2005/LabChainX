@@ -109,64 +109,38 @@ A scientific reproducibility and collaboration platform for building, sharing, a
 
 ## 🚀 Getting Started
 
-### Prerequisites
+### Quick Start
 
-- Node.js 18+ and npm
-- Python 3.9+ (for ML server)
-- MongoDB (local or Atlas)
+**For detailed setup instructions, user flow, and beginner-friendly guides, see [SETUP.md](./SETUP.md)**
 
-### Installation
+### Quick Setup
 
-1. **Clone the repository**
-   ```bash
-   git clone <repository-url>
-   cd labchainx
-   ```
-
-2. **Install Next.js dependencies**
+1. **Install dependencies**
    ```bash
    npm install
+   cd socket-server && npm install && cd ..
+   cd ml-server && python3 -m venv venv && source venv/bin/activate && pip install -r requirements.txt && cd ..
    ```
 
-3. **Set up environment variables**
-   Create `.env.local` in the root directory:
-   ```env
-   MONGODB_URI=mongodb://localhost:27017/labchain
-   NEXTAUTH_SECRET=your-secret-key-min-32-characters
-   NEXTAUTH_URL=http://localhost:3000
-   NEXT_PUBLIC_SOCKET_URL=http://localhost:3001
-   NEXT_PUBLIC_ML_SERVER_URL=http://localhost:8000
-   ```
+2. **Set up environment variables**
+   - Copy `.env.example` to `.env.local` (Next.js app)
+   - Copy `socket-server/.env.example` to `socket-server/.env`
+   - Copy `ml-server/.env.example` to `ml-server/.env`
+   - Fill in your values (see SETUP.md for details)
 
-4. **Set up Socket.IO server**
-   ```bash
-   cd socket-server
-   npm install
-   # Create .env with:
-   # CLIENT_URL=http://localhost:3000
-   # JWT_SECRET=your-secret-key
-   # PORT=3001
-   npm start
-   ```
+3. **Run all servers**
+   - Terminal 1: `npm run dev` (Next.js - port 3000)
+   - Terminal 2: `cd socket-server && npm start` (Socket.IO - port 3001)
+   - Terminal 3: `cd ml-server && source venv/bin/activate && python app.py` (ML Server - port 8000)
 
-5. **Set up ML server**
-   ```bash
-   cd ml-server
-   python3 -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
-   pip install -r requirements.txt
-   # Create .env with:
-   # OPENAI_API_KEY=your-openai-key (optional)
-   # PORT=8000
-   python app.py
-   ```
+Visit: **http://localhost:3000**
 
-6. **Run Next.js development server**
-   ```bash
-   npm run dev
-   ```
-
-The application will be available at `http://localhost:3000`
+📖 **See [SETUP.md](./SETUP.md) for:**
+- Complete user flow explanation
+- Step-by-step setup guide for beginners
+- FastAPI/Flask beginner tutorial
+- Troubleshooting guide
+- How all servers work together
 
 ## 📝 Available Scripts
 
