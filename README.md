@@ -4,12 +4,19 @@ A scientific reproducibility and collaboration platform for building, sharing, a
 
 ## 🚀 Features
 
+### Core Features
 - **Real-time Collaborative Lab Notebooks** - Live synchronization with Socket.IO, voice-to-text transcription, and auto-save
 - **Protocol Builder** - Drag-and-drop protocol creation with versioning and structured steps
 - **ML-Powered Assistance** - AI autocomplete and protocol standardization via ML server
 - **Replication Tracking** - Track experiment replications with cryptographic verification
 - **Institution Verification** - Cryptographic signing for result integrity
 - **User Authentication** - Secure authentication with NextAuth.js and MongoDB
+
+### Phase 2 - Collaboration & Visualization
+- **Pull Request Workflow** - PR-style collaboration for protocol changes with review, comments, and merge
+- **Data Visualization** - Interactive charts (time-series, scatter plots, bar-line combo) with CSV export
+- **Verification Network** - Visual network graph showing institutional trust scores and verification lineage
+- **Protocol Branching** - Support for multiple protocol branches and version management
 
 ## 🏗️ Architecture
 
@@ -61,6 +68,8 @@ A scientific reproducibility and collaboration platform for building, sharing, a
 - **Socket.IO Client** - Real-time collaboration
 - **shadcn/ui** - UI components
 - **Sonner** - Toast notifications
+- **Recharts** - Interactive data visualization
+- **vis-network** - Network graph visualization
 
 ### Backend
 - **Next.js API Routes** - Serverless API endpoints
@@ -97,7 +106,16 @@ A scientific reproducibility and collaboration platform for building, sharing, a
 │   ├── User.ts
 │   ├── Notebook.ts
 │   ├── Protocol.ts
-│   └── Replication.ts
+│   ├── Replication.ts
+│   ├── PullRequest.ts
+│   ├── Verification.ts
+│   └── Institution.ts
+├── components/
+│   ├── pr/                # Pull Request components
+│   ├── charts/            # Data visualization components
+│   └── verification/       # Verification network components
+├── scripts/               # Migration and utility scripts
+│   └── migrate-phase2.ts  # Phase 2 database migration
 ├── stores/                # Zustand stores
 ├── hooks/                 # Custom React hooks
 ├── types/                 # TypeScript types
@@ -181,8 +199,28 @@ The ML server provides:
 
 - **User** - User accounts with institution and role
 - **Notebook** - Lab notebooks with version history
-- **Protocol** - Experimental protocols with steps and versions
+- **Protocol** - Experimental protocols with steps, versions, and branching
 - **Replication** - Experiment replications with verification
+- **PullRequest** - PR-style protocol change proposals with reviews and comments
+- **Verification** - Protocol/experiment verification records
+- **Institution** - Institution metadata with trust scores
+
+## 🔄 Database Migrations
+
+### Phase 2 Migration
+
+To add Phase 2 features to an existing database, run:
+
+```bash
+npx tsx scripts/migrate-phase2.ts
+```
+
+This will:
+- Create `pullrequests`, `verifications`, and `institutions` collections
+- Add indexes for efficient queries
+- Update existing Protocol documents with branching fields (`currentBranch`, `branches`)
+
+**Note:** Make sure your `.env.local` has the correct `MONGODB_URI` before running the migration.
 
 ## 🚢 Deployment
 
