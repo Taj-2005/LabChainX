@@ -39,6 +39,14 @@ const UserSchema = new Schema<UserDocument>(
       type: Boolean,
       default: false,
     },
+    bio: {
+      type: String,
+      trim: true,
+    },
+    profilePicture: {
+      type: String,
+      trim: true,
+    },
   },
   {
     timestamps: true,

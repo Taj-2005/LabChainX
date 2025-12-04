@@ -35,6 +35,8 @@ export async function GET() {
         institution: user.institution,
         role: user.role,
         verified: user.verified,
+        bio: user.bio,
+        profilePicture: user.profilePicture,
         createdAt: user.createdAt,
         updatedAt: user.updatedAt,
       },
@@ -60,7 +62,7 @@ export async function PATCH(req: NextRequest) {
       );
     }
 
-    const { name, institution, password, currentPassword } = await req.json();
+    const { name, institution, bio, password, currentPassword, profilePicture } = await req.json();
 
     await connectDB();
 
@@ -81,6 +83,16 @@ export async function PATCH(req: NextRequest) {
     // Update institution
     if (institution !== undefined) {
       user.institution = institution;
+    }
+
+    // Update bio
+    if (bio !== undefined) {
+      user.bio = bio;
+    }
+
+    // Update profile picture
+    if (profilePicture !== undefined) {
+      user.profilePicture = profilePicture;
     }
 
     // Update password if provided
@@ -107,6 +119,8 @@ export async function PATCH(req: NextRequest) {
         institution: user.institution,
         role: user.role,
         verified: user.verified,
+        bio: user.bio,
+        profilePicture: user.profilePicture,
         createdAt: user.createdAt,
         updatedAt: user.updatedAt,
       },
