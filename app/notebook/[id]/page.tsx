@@ -4,12 +4,14 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Mic, MicOff, Save, Users } from "lucide-react";
+import { Mic, MicOff, Save, Users, Sparkles, History } from "lucide-react";
+import Link from "next/link";
 import { useNotebook } from "@/hooks/use-notebook";
 import { useSocket } from "@/hooks/use-socket";
 import { useVoiceToText } from "@/hooks/use-voice-to-text";
 import { toast } from "sonner";
 import { LoadingSpinner } from "@/components/loading";
+import { standardizeProtocol, checkMLServerHealth } from "@/lib/ml-api";
 
 export default function NotebookDetailPage() {
   const params = useParams();
@@ -34,6 +36,8 @@ export default function NotebookDetailPage() {
   const [title, setTitle] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const [isAIAssisting, setIsAIAssisting] = useState(false);
+  const [mlServerAvailable, setMlServerAvailable] = useState(false);
   const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -44,6 +48,15 @@ export default function NotebookDetailPage() {
       setTitle(notebook.title || "");
     }
   }, [notebook]);
+
+  // Check ML server availability
+  useEffect(() => {
+    const checkMLServer = async () => {
+      const available = await checkMLServerHealth();
+      setMlServerAvailable(available);
+    };
+    checkMLServer();
+  }, []);
 
   // Handle voice transcription
   useEffect(() => {
@@ -141,6 +154,55 @@ export default function NotebookDetailPage() {
     }
   };
 
+  // AI-assisted structure conversion
+  const handleAIStructure = async () => {
+    if (!mlServerAvailable) {
+      toast.error("ML Server is not available. Please ensure it's running.");
+      return;
+    }
+
+    if (!content.trim()) {
+      toast.error("Please add some content before structuring with AI");
+      return;
+    }
+
+    try {
+      setIsAIAssisting(true);
+      const result = await standardizeProtocol(content);
+      
+      if (result && result.protocol) {
+        // Create structured format from protocol
+        const structured = `# ${result.protocol.title || "Structured Protocol"}
+
+${result.protocol.description || ""}
+
+## Protocol Steps
+
+${result.extracted_steps.map((step, idx) => `
+### Step ${step.order}: ${step.title}
+
+- **Reagents:** ${step.reagents.join(", ") || "None"}
+- **Timing:** ${step.timing || "Not specified"}
+- **Equipment:** ${step.equipment.join(", ") || "None"}
+- **Notes:** ${step.notes || ""}
+`).join("\n")}
+
+---
+
+*Structured by AI with ${Math.round(result.confidence * 100)}% confidence*
+`;
+
+        setContent(structured);
+        toast.success("Content structured successfully!");
+      }
+    } catch (err) {
+      console.error("AI structuring failed:", err);
+      toast.error("Failed to structure content. Please try again.");
+    } finally {
+      setIsAIAssisting(false);
+    }
+  };
+
   // Cleanup on unmount
   useEffect(() => {
     return () => {
@@ -208,6 +270,26 @@ export default function NotebookDetailPage() {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          {mlServerAvailable && content.trim() && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleAIStructure}
+              disabled={isAIAssisting}
+            >
+              {isAIAssisting ? (
+                <>
+                  <LoadingSpinner size="sm" className="mr-2" />
+                  AI Processing...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="h-4 w-4 mr-2" />
+                  AI Structure
+                </>
+              )}
+            </Button>
+          )}
           <Button
             variant={isListening ? "default" : "outline"}
             size="sm"
@@ -226,6 +308,12 @@ export default function NotebookDetailPage() {
               </>
             )}
           </Button>
+          <Link href={`/notebook/${notebookId}/history`}>
+            <Button variant="outline" size="sm">
+              <History className="h-4 w-4 mr-2" />
+              History
+            </Button>
+          </Link>
           <Button
             variant="outline"
             size="sm"
@@ -266,10 +354,11 @@ export default function NotebookDetailPage() {
         </CardContent>
       </Card>
 
-      {/* AI Autocomplete stub */}
-      <div className="text-xs text-gray-500 text-center">
-        AI autocomplete coming soon - will integrate with ML server
-      </div>
+      {mlServerAvailable && (
+        <div className="text-xs text-gray-500 text-center">
+          ✨ AI assistance available - Click "AI Structure" to convert notes to structured protocol
+        </div>
+      )}
     </div>
   );
 }

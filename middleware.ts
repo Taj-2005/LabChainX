@@ -13,7 +13,7 @@ export function middleware(request: NextRequest) {
   );
 
   // Protected routes
-  const protectedRoutes = ["/dashboard", "/notebook", "/protocols", "/replications"];
+  const protectedRoutes = ["/dashboard", "/notebook", "/protocols", "/replications", "/profile"];
   const isProtectedRoute = protectedRoutes.some((route) => 
     pathname.startsWith(route)
   );
@@ -45,6 +45,7 @@ export const config = {
     "/notebook/:path*",
     "/protocols/:path*",
     "/replications/:path*",
+    "/profile/:path*",
   ],
 };
 

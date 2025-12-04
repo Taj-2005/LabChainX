@@ -1,5 +1,6 @@
 const { Server } = require("socket.io");
 const jwt = require("jsonwebtoken");
+require("dotenv").config();
 
 const io = new Server({
   cors: {
@@ -144,7 +145,7 @@ io.on("connection", (socket) => {
   });
 });
 
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 3003;
 io.listen(PORT);
 console.log(`Socket.IO server running on port ${PORT}`);
 

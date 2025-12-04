@@ -1,7 +1,78 @@
+"use client";
+
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { BookOpen, ClipboardList, Repeat, TrendingUp } from "lucide-react";
+import { LoadingSpinner } from "@/components/loading";
+
+interface DashboardStats {
+  notebooks: number;
+  protocols: number;
+  draftProtocols: number;
+  replications: number;
+  pendingVerifications: number;
+  successRate: number;
+}
+
+interface Activity {
+  type: "notebook" | "protocol" | "replication";
+  title: string;
+  action: string;
+  timestamp: string;
+  status?: string;
+}
+
+function formatTimeAgo(dateString: string): string {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+
+  if (diffInSeconds < 60) return "just now";
+  if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} minutes ago`;
+  if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} hours ago`;
+  if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)} days ago`;
+  return date.toLocaleDateString();
+}
+
+function getActivityColor(type: string, status?: string): string {
+  if (type === "protocol" && status === "published") return "bg-blue-600";
+  if (type === "replication" && status === "verified") return "bg-green-600";
+  return "bg-yellow-600";
+}
 
 export default function DashboardPage() {
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [activities, setActivities] = useState<Activity[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setIsLoading(true);
+        
+        // Fetch stats
+        const statsRes = await fetch("/api/dashboard/stats");
+        if (statsRes.ok) {
+          const statsData = await statsRes.json();
+          setStats(statsData.stats);
+        }
+
+        // Fetch activity
+        const activityRes = await fetch("/api/dashboard/activity");
+        if (activityRes.ok) {
+          const activityData = await activityRes.json();
+          setActivities(activityData.activities || []);
+        }
+      } catch (error) {
+        console.error("Error fetching dashboard data:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
   return (
     <div className="p-6 space-y-6">
       <div>
@@ -10,51 +81,70 @@ export default function DashboardPage() {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Notebooks</CardTitle>
-            <BookOpen className="h-4 w-4 text-gray-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">12</div>
-            <p className="text-xs text-gray-500">+2 from last month</p>
-          </CardContent>
-        </Card>
+      {isLoading ? (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {[1, 2, 3, 4].map((i) => (
+            <Card key={i}>
+              <CardContent className="p-6">
+                <div className="text-center py-8">
+                  <LoadingSpinner size="sm" />
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Active Notebooks</CardTitle>
+              <BookOpen className="h-4 w-4 text-gray-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats?.notebooks || 0}</div>
+              <p className="text-xs text-gray-500">Total notebooks</p>
+            </CardContent>
+          </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Protocols</CardTitle>
-            <ClipboardList className="h-4 w-4 text-gray-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">8</div>
-            <p className="text-xs text-gray-500">3 drafts in progress</p>
-          </CardContent>
-        </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Protocols</CardTitle>
+              <ClipboardList className="h-4 w-4 text-gray-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats?.protocols || 0}</div>
+              <p className="text-xs text-gray-500">
+                {stats?.draftProtocols || 0} draft{stats?.draftProtocols !== 1 ? "s" : ""} in progress
+              </p>
+            </CardContent>
+          </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Replications</CardTitle>
-            <Repeat className="h-4 w-4 text-gray-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">5</div>
-            <p className="text-xs text-gray-500">2 pending verification</p>
-          </CardContent>
-        </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Replications</CardTitle>
+              <Repeat className="h-4 w-4 text-gray-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats?.replications || 0}</div>
+              <p className="text-xs text-gray-500">
+                {stats?.pendingVerifications || 0} pending verification
+                {stats?.pendingVerifications !== 1 ? "s" : ""}
+              </p>
+            </CardContent>
+          </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Success Rate</CardTitle>
-            <TrendingUp className="h-4 w-4 text-gray-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">87%</div>
-            <p className="text-xs text-gray-500">+5% from last month</p>
-          </CardContent>
-        </Card>
-      </div>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Success Rate</CardTitle>
+              <TrendingUp className="h-4 w-4 text-gray-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats?.successRate || 0}%</div>
+              <p className="text-xs text-gray-500">Completed replications</p>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {/* Recent Activity */}
       <Card>
@@ -63,29 +153,30 @@ export default function DashboardPage() {
           <CardDescription>Your latest lab activities and updates</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            <div className="flex items-center space-x-4">
-              <div className="h-2 w-2 rounded-full bg-blue-600" />
-              <div className="flex-1">
-                <p className="text-sm font-medium">Created new protocol &quot;Cell Culture Protocol&quot;</p>
-                <p className="text-xs text-gray-500">2 hours ago</p>
-              </div>
+          {isLoading ? (
+            <div className="text-center py-8">
+              <LoadingSpinner size="sm" />
             </div>
-            <div className="flex items-center space-x-4">
-              <div className="h-2 w-2 rounded-full bg-green-600" />
-              <div className="flex-1">
-                <p className="text-sm font-medium">Replication verified: &quot;PCR Amplification&quot;</p>
-                <p className="text-xs text-gray-500">1 day ago</p>
-              </div>
+          ) : activities.length === 0 ? (
+            <p className="text-sm text-gray-500 text-center py-8">No recent activity</p>
+          ) : (
+            <div className="space-y-4">
+              {activities.map((activity, idx) => (
+                <div key={idx} className="flex items-center space-x-4">
+                  <div
+                    className={`h-2 w-2 rounded-full ${getActivityColor(activity.type, activity.status)}`}
+                  />
+                  <div className="flex-1">
+                    <p className="text-sm font-medium">
+                      {activity.action} {activity.type === "protocol" ? "protocol" : activity.type}{" "}
+                      &quot;{activity.title}&quot;
+                    </p>
+                    <p className="text-xs text-gray-500">{formatTimeAgo(activity.timestamp)}</p>
+                  </div>
+                </div>
+              ))}
             </div>
-            <div className="flex items-center space-x-4">
-              <div className="h-2 w-2 rounded-full bg-yellow-600" />
-              <div className="flex-1">
-                <p className="text-sm font-medium">Updated notebook &quot;Experiment #42&quot;</p>
-                <p className="text-xs text-gray-500">2 days ago</p>
-              </div>
-            </div>
-          </div>
+          )}
         </CardContent>
       </Card>
     </div>

@@ -107,6 +107,16 @@ export function Sidebar() {
                   <p className="text-xs text-gray-500 truncate">{user.email || "user@lab.edu"}</p>
                 </div>
               </div>
+              <Link
+                href="/profile"
+                onClick={() => setIsMobileOpen(false)}
+                className={cn(
+                  "block text-xs text-gray-600 hover:text-gray-900 px-2 py-1 rounded hover:bg-gray-50",
+                  pathname === "/profile" && "bg-blue-50 text-blue-700"
+                )}
+              >
+                Profile Settings
+              </Link>
               <button
                 onClick={() => signOut({ callbackUrl: "/" })}
                 className="w-full text-left text-xs text-gray-600 hover:text-gray-900 px-2 py-1 rounded hover:bg-gray-50"
