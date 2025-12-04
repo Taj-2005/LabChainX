@@ -10,10 +10,19 @@ interface ProtocolVersion {
   versionNumber: number;
 }
 
+interface ProtocolBranch {
+  name: string;
+  createdAt: Date;
+  createdBy: string;
+  baseVersion: number;
+}
+
 interface ProtocolDocument extends Omit<ProtocolType, "id">, mongoose.Document {
   versions: ProtocolVersion[];
   currentVersion: number;
   status: "draft" | "published" | "archived";
+  currentBranch: string;
+  branches: ProtocolBranch[];
   _id: mongoose.Types.ObjectId;
 }
 
@@ -79,6 +88,16 @@ const ProtocolSchema = new Schema<ProtocolDocument>(
     attachments: [{
       public_id: { type: String, required: true },
       secure_url: { type: String, required: true },
+    }],
+    currentBranch: {
+      type: String,
+      default: "main",
+    },
+    branches: [{
+      name: { type: String, required: true },
+      createdAt: { type: Date, default: Date.now },
+      createdBy: { type: String, required: true },
+      baseVersion: { type: Number, required: true },
     }],
   },
   {
