@@ -5,7 +5,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { LoadingSpinner } from "@/components/loading";
-import { User, Mail, Building2, Shield, Save, Upload, Image as ImageIcon } from "lucide-react";
+import { User, Mail, Building2, Shield, Save } from "lucide-react";
+import { ImageUpload } from "@/components/ui/image-upload";
+import { CloudinaryImage } from "@/hooks/use-image-upload";
 
 interface UserProfile {
   id: string;
@@ -31,8 +33,7 @@ export default function ProfilePage() {
     newPassword: "",
     confirmPassword: "",
   });
-  const [profilePicture, setProfilePicture] = useState<string | null>(null);
-  const [isUploadingPicture, setIsUploadingPicture] = useState(false);
+  const [profileImage, setProfileImage] = useState<CloudinaryImage | null>(null);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -42,7 +43,7 @@ export default function ProfilePage() {
         if (res.ok) {
           const data = await res.json();
           setProfile(data.user);
-          setProfilePicture(data.user.profilePicture || null);
+          setProfileImage(data.user.profileImage || null);
           setFormData({
             name: data.user.name || "",
             institution: data.user.institution || "",
@@ -87,12 +88,14 @@ export default function ProfilePage() {
         name: string;
         institution: string;
         bio?: string;
+        profileImage?: CloudinaryImage | null;
         password?: string;
         currentPassword?: string;
       } = {
         name: formData.name,
         institution: formData.institution,
         bio: formData.bio,
+        profileImage: profileImage,
       };
 
       if (formData.newPassword) {
@@ -111,7 +114,7 @@ export default function ProfilePage() {
       if (res.ok) {
         const data = await res.json();
         setProfile(data.user);
-        setProfilePicture(data.user.profilePicture || null);
+        setProfileImage(data.user.profileImage || null);
         setIsEditing(false);
         setFormData({
           ...formData,
@@ -132,34 +135,12 @@ export default function ProfilePage() {
     }
   };
 
-  const handlePictureUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const handleImageUpload = (image: CloudinaryImage) => {
+    setProfileImage(image);
+  };
 
-    try {
-      setIsUploadingPicture(true);
-      const formData = new FormData();
-      formData.append("file", file);
-
-      const res = await fetch("/api/profile/upload", {
-        method: "POST",
-        body: formData,
-      });
-
-      if (res.ok) {
-        const data = await res.json();
-        setProfilePicture(data.profilePicture);
-        toast.success("Profile picture updated successfully");
-      } else {
-        const error = await res.json();
-        toast.error(error.error || "Failed to upload picture");
-      }
-    } catch (error) {
-      console.error("Error uploading picture:", error);
-      toast.error("Failed to upload picture");
-    } finally {
-      setIsUploadingPicture(false);
-    }
+  const handleImageRemove = () => {
+    setProfileImage(null);
   };
 
   const getRoleBadgeColor = (role: string) => {
@@ -208,59 +189,15 @@ export default function ProfilePage() {
         </CardHeader>
         <CardContent className="space-y-6">
           {/* Profile Picture */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Profile Picture
-            </label>
-            <div className="flex items-center gap-4">
-              <div className="relative">
-                {profilePicture ? (
-                  <img
-                    src={profilePicture}
-                    alt="Profile"
-                    className="w-24 h-24 rounded-full object-cover border-2 border-gray-200"
-                  />
-                ) : (
-                  <div className="w-24 h-24 rounded-full bg-gray-100 flex items-center justify-center border-2 border-gray-200">
-                    <ImageIcon className="h-8 w-8 text-gray-400" />
-                  </div>
-                )}
-              </div>
-              <div>
-                <label className="cursor-pointer">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handlePictureUpload}
-                    disabled={isUploadingPicture}
-                    className="hidden"
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    disabled={isUploadingPicture}
-                    asChild
-                  >
-                    <span>
-                      {isUploadingPicture ? (
-                        <>
-                          <LoadingSpinner size="sm" className="mr-2" />
-                          Uploading...
-                        </>
-                      ) : (
-                        <>
-                          <Upload className="h-4 w-4 mr-2" />
-                          {profilePicture ? "Change Picture" : "Upload Picture"}
-                        </>
-                      )}
-                    </span>
-                  </Button>
-                </label>
-                <p className="text-xs text-gray-500 mt-1">Max 5MB, JPG/PNG</p>
-              </div>
-            </div>
-          </div>
+          <ImageUpload
+            onUploadComplete={handleImageUpload}
+            onRemove={handleImageRemove}
+            currentImage={profileImage}
+            folder="profiles"
+            label="Profile Picture"
+            variant="profile"
+            maxSize={10}
+          />
 
           {/* Name */}
           <div>

@@ -79,7 +79,7 @@ export async function GET(
         role: user.role,
         verified: user.verified,
         bio: user.bio,
-        profilePicture: user.profilePicture,
+        profileImage: user.profileImage,
         createdAt: user.createdAt,
         updatedAt: user.updatedAt,
       },

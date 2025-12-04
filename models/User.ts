@@ -43,9 +43,9 @@ const UserSchema = new Schema<UserDocument>(
       type: String,
       trim: true,
     },
-    profilePicture: {
-      type: String,
-      trim: true,
+    profileImage: {
+      public_id: { type: String },
+      secure_url: { type: String },
     },
   },
   {

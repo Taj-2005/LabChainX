@@ -168,6 +168,11 @@ NEXTAUTH_SECRET=generate-with-openssl-rand-base64-32
 NEXTAUTH_URL=http://localhost:3000
 NEXT_PUBLIC_SOCKET_URL=http://localhost:3001
 NEXT_PUBLIC_ML_SERVER_URL=http://localhost:8000
+
+# Cloudinary Configuration (for image uploads)
+CLOUDINARY_CLOUD_NAME=your-cloud-name
+CLOUDINARY_API_KEY=your-api-key
+CLOUDINARY_API_SECRET=your-api-secret
 ```
 
 ### 3. Run All Servers
@@ -234,6 +239,15 @@ Copy the output and use it as your `NEXTAUTH_SECRET` value.
 3. Create a database user
 4. Get connection string
 5. Replace `<password>` and `<dbname>` in the connection string
+
+**For Cloudinary (Image Uploads):**
+1. Go to [Cloudinary](https://cloudinary.com) and sign up for a free account
+2. Navigate to Dashboard
+3. Copy your:
+   - Cloud Name
+   - API Key
+   - API Secret
+4. Add them to `.env.local` as shown above
 
 #### Step 3: Run Development Server
 

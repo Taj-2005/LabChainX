@@ -76,6 +76,10 @@ const ProtocolSchema = new Schema<ProtocolDocument>(
       enum: ["draft", "published", "archived"],
       default: "draft",
     },
+    attachments: [{
+      public_id: { type: String, required: true },
+      secure_url: { type: String, required: true },
+    }],
   },
   {
     timestamps: true,

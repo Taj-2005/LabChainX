@@ -16,7 +16,10 @@ interface UserProfile {
   role: string;
   verified: boolean;
   bio?: string;
-  profilePicture?: string;
+  profileImage?: {
+    public_id: string;
+    secure_url: string;
+  };
   createdAt: string;
   updatedAt: string;
 }
@@ -114,9 +117,9 @@ export default function UserProfilePage() {
         <CardContent className="p-6">
           <div className="flex items-start gap-6">
             <div className="flex-shrink-0">
-              {user.profilePicture ? (
+              {user.profileImage?.secure_url ? (
                 <img
-                  src={user.profilePicture}
+                  src={user.profileImage.secure_url}
                   alt={user.name}
                   className="w-32 h-32 rounded-full object-cover border-4 border-gray-200"
                 />

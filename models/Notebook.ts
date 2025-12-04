@@ -49,6 +49,10 @@ const NotebookSchema = new Schema<NotebookDocument>(
       type: [NotebookVersionSchema],
       default: [],
     },
+    experimentImages: [{
+      public_id: { type: String, required: true },
+      secure_url: { type: String, required: true },
+    }],
   },
   {
     timestamps: true,
