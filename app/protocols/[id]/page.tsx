@@ -19,9 +19,10 @@ import {
 } from "@dnd-kit/sortable";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Save, Plus, ArrowLeft, History } from "lucide-react";
+import { Save, Plus, ArrowLeft, History, Sparkles } from "lucide-react";
 import { DraggableStep } from "@/components/protocol/draggable-step";
 import { ProtocolStep } from "@/types";
+import { autocompleteStep, checkMLServerHealth } from "@/lib/ml-api";
 
 export default function ProtocolBuilderPage() {
   const params = useParams();
@@ -34,6 +35,8 @@ export default function ProtocolBuilderPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isAutocompleting, setIsAutocompleting] = useState(false);
+  const [mlServerAvailable, setMlServerAvailable] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -70,6 +73,15 @@ export default function ProtocolBuilderPage() {
     fetchProtocol();
   }, [protocolId]);
 
+  // Check ML server availability
+  useEffect(() => {
+    const checkMLServer = async () => {
+      const available = await checkMLServerHealth();
+      setMlServerAvailable(available);
+    };
+    checkMLServer();
+  }, []);
+
   // Handle drag end
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
@@ -101,6 +113,40 @@ export default function ProtocolBuilderPage() {
       notes: "",
     };
     setSteps([...steps, newStep]);
+  };
+
+  // AI Autocomplete next step
+  const handleAutocompleteStep = async () => {
+    if (!mlServerAvailable) {
+      setError("ML Server is not available. Please ensure it's running.");
+      return;
+    }
+
+    try {
+      setIsAutocompleting(true);
+      setError(null);
+
+      const response = await autocompleteStep(steps);
+
+      if (response.suggestions && response.suggestions.length > 0) {
+        const suggestion = response.suggestions[0];
+        const newStep: ProtocolStep = {
+          id: `step-${Date.now()}`,
+          order: steps.length + 1,
+          title: suggestion.title || "",
+          reagents: suggestion.reagents || [],
+          equipment: suggestion.equipment || [],
+          timing: suggestion.timing || "",
+          notes: suggestion.notes || "",
+        };
+        setSteps([...steps, newStep]);
+      }
+    } catch (err) {
+      console.error("Autocomplete error:", err);
+      setError("Failed to get autocomplete suggestion. Please try again.");
+    } finally {
+      setIsAutocompleting(false);
+    }
   };
 
   // Update step
@@ -232,10 +278,23 @@ export default function ProtocolBuilderPage() {
       <div>
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-semibold text-gray-900">Protocol Steps</h2>
-          <Button onClick={handleAddStep} size="sm">
-            <Plus className="h-4 w-4 mr-2" />
-            Add Step
-          </Button>
+          <div className="flex items-center gap-2">
+            {mlServerAvailable && steps.length > 0 && (
+              <Button
+                onClick={handleAutocompleteStep}
+                size="sm"
+                variant="outline"
+                disabled={isAutocompleting}
+              >
+                <Sparkles className="h-4 w-4 mr-2" />
+                {isAutocompleting ? "AI Thinking..." : "AI Suggest Next Step"}
+              </Button>
+            )}
+            <Button onClick={handleAddStep} size="sm">
+              <Plus className="h-4 w-4 mr-2" />
+              Add Step
+            </Button>
+          </div>
         </div>
 
         {error && (
