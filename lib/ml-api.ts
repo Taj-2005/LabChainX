@@ -83,7 +83,7 @@ export async function standardizeProtocol(
  * Get autocomplete suggestions for next protocol step
  */
 export async function autocompleteStep(
-  currentSteps: Array<Record<string, unknown>>,
+  currentSteps: Array<Record<string, unknown>> | unknown[],
   partialText?: string,
   context?: Record<string, unknown>
 ): Promise<AutocompleteResponse> {
